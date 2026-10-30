@@ -1,0 +1,528 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Portal & Data Management - EduAI Recommender{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+  <div>
+    <h3 class="fw-bold mb-1"><i class="bi bi-shield-lock-fill text-warning me-2"></i>Administrator Portal</h3>
+    <p class="text-muted small mb-0">Manage curriculum syllabus, educational learning resources, CSV question datasets, and student records.</p>
+  </div>
+  <a href="{{ url_for('admin_reset_seed') }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Reset database back to initial seed data?')">
+    <i class="bi bi-arrow-clockwise me-1"></i> Reset & Re-Seed Demo Data
+  </a>
+</div>
+
+<!-- Overview Stats Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-lg col-md-4 col-sm-6">
+    <div class="card card-modern p-3">
+      <div class="text-muted small fw-semibold">Registered Students</div>
+      <div class="fs-3 fw-bold text-primary">{{ stats.total_students }}</div>
+    </div>
+  </div>
+  <div class="col-lg col-md-4 col-sm-6">
+    <div class="card card-modern p-3">
+      <div class="text-muted small fw-semibold">Total Subjects</div>
+      <div class="fs-3 fw-bold text-dark">{{ stats.total_subjects }}</div>
+    </div>
+  </div>
+  <div class="col-lg col-md-4 col-sm-6">
+    <div class="card card-modern p-3">
+      <div class="text-muted small fw-semibold">Syllabus Topics</div>
+      <div class="fs-3 fw-bold text-success">{{ stats.total_topics }}</div>
+    </div>
+  </div>
+  <div class="col-lg col-md-6 col-sm-6">
+    <div class="card card-modern p-3">
+      <div class="text-muted small fw-semibold">Question Bank Items</div>
+      <div class="fs-3 fw-bold text-warning">{{ stats.total_questions }}</div>
+    </div>
+  </div>
+  <div class="col-lg col-md-6 col-sm-12">
+    <div class="card card-modern p-3 border-start border-4 border-info">
+      <div class="text-muted small fw-semibold">Curated Resources</div>
+      <div class="fs-3 fw-bold text-info">{{ stats.total_resources }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Upload Questions CSV -->
+  <div class="col-lg-6">
+    <div class="card card-modern p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold text-primary mb-0"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Import Questions (CSV)</h5>
+        <a href="{{ url_for('download_sample_questions') }}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-download me-1"></i> Sample CSV
+        </a>
+      </div>
+      <p class="text-muted small mb-3">
+        Upload diagnostic questions in the required 14-column CSV format. New questions will be linked to topics automatically.
+      </p>
+
+      <div class="p-2 bg-light border rounded mb-3 small font-monospace text-truncate">
+        student_id,branch,year,semester,subject,unit,topic,question,option_a,option_b,option_c,option_d,correct_answer,difficulty
+      </div>
+
+      <form method="POST" action="{{ url_for('admin_upload_questions') }}" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Select Questions CSV File</label>
+          <input type="file" name="csv_file" class="form-control" accept=".csv" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 fw-semibold">
+          <i class="bi bi-upload me-1"></i> Upload & Import Questions
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Upload Syllabus CSV -->
+  <div class="col-lg-6">
+    <div class="card card-modern p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold text-success mb-0"><i class="bi bi-journal-plus me-2"></i>Import Syllabus (CSV)</h5>
+        <a href="{{ url_for('download_sample_syllabus') }}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-download me-1"></i> Sample CSV
+        </a>
+      </div>
+      <p class="text-muted small mb-3">
+        Import subjects, units, topics, and subtopics for any academic branch and semester via CSV file.
+      </p>
+
+      <div class="p-2 bg-light border rounded mb-3 small font-monospace text-truncate">
+        branch,year,semester,subject,unit,topic,subtopic
+      </div>
+
+      <form method="POST" action="{{ url_for('admin_upload_syllabus') }}" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Target Semester</label>
+          <select name="semester_id" class="form-select" required>
+            {% for sem in semesters %}
+              <option value="{{ sem.id }}">{{ sem.branch.name }} - {{ sem.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Select Syllabus CSV File</label>
+          <input type="file" name="csv_file" class="form-control" accept=".csv" required>
+        </div>
+        <button type="submit" class="btn btn-success w-100 fw-semibold">
+          <i class="bi bi-upload me-1"></i> Upload & Import Syllabus
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Manual Entry Accordion -->
+<div class="card card-modern p-4 mb-4">
+  <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle text-primary me-2"></i>Manual Curriculum, Resource & Question Entry</h5>
+  <div class="accordion" id="manualEntryAccordion">
+    <!-- Add Subject Form -->
+    <div class="accordion-item border rounded mb-2 overflow-hidden">
+      <h2 class="accordion-header" id="headingAddSubj">
+        <button class="accordion-button collapsed py-2 bg-light fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAddSubj">
+          <i class="bi bi-book me-2 text-primary"></i> Add New Subject
+        </button>
+      </h2>
+      <div id="collapseAddSubj" class="accordion-collapse collapse" data-bs-parent="#manualEntryAccordion">
+        <div class="accordion-body p-3">
+          <form method="POST" action="{{ url_for('admin_add_subject') }}">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Semester</label>
+                <select name="semester_id" class="form-select" required>
+                  {% for sem in semesters %}
+                    <option value="{{ sem.id }}">{{ sem.branch.name }} - {{ sem.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label small fw-semibold">Subject Name</label>
+                <input type="text" name="subject_name" class="form-control" placeholder="e.g. Machine Learning" required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small fw-semibold">Course Code (Optional)</label>
+                <input type="text" name="subject_code" class="form-control" placeholder="e.g. 26AF1245PC501">
+              </div>
+              <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary btn-sm">
+                  <i class="bi bi-plus-lg me-1"></i> Add Subject
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Learning Resource Form -->
+    <div class="accordion-item border rounded mb-2 overflow-hidden">
+      <h2 class="accordion-header" id="headingAddRes">
+        <button class="accordion-button collapsed py-2 bg-light fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAddRes">
+          <i class="bi bi-mortarboard me-2 text-info"></i> Add Curated Educational Resource
+        </button>
+      </h2>
+      <div id="collapseAddRes" class="accordion-collapse collapse" data-bs-parent="#manualEntryAccordion">
+        <div class="accordion-body p-3">
+          <form method="POST" action="{{ url_for('admin_add_resource') }}">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Associated Syllabus Topic <span class="text-danger">*</span></label>
+                <select name="topic_id" class="form-select" required>
+                  {% for top in topics %}
+                    <option value="{{ top.id }}">{{ top.unit_ref.subject_ref.name }} &rarr; {{ top.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Resource Title <span class="text-danger">*</span></label>
+                <input type="text" name="title" class="form-control" placeholder="e.g. Complete A* Search Tutorial with Code" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Provider / Platform <span class="text-danger">*</span></label>
+                <input type="text" name="provider" class="form-control" placeholder="e.g. GeeksforGeeks, YouTube - freeCodeCamp, NPTEL" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Resource Type</label>
+                <select name="resource_type" class="form-select">
+                  <option value="notes">Theory Notes / Article</option>
+                  <option value="video">Video Lecture</option>
+                  <option value="documentation">Official Documentation</option>
+                  <option value="practice">Practice Problems</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Difficulty</label>
+                <select name="difficulty" class="form-select">
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate" selected>Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                </select>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label small fw-semibold">Resource URL <span class="text-danger">*</span></label>
+                <input type="url" name="resource_url" class="form-control" placeholder="https://..." required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Verification Status</label>
+                <select name="verification_status" class="form-select">
+                  <option value="verified" selected>Verified by Academic Reviewer</option>
+                  <option value="unverified">Unverified</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-semibold">Description / Pedagogical Notes</label>
+                <input type="text" name="description" class="form-control" placeholder="e.g. Comprehensive guide with step-by-step mathematical examples.">
+              </div>
+              <div class="col-12 text-end">
+                <button type="submit" class="btn btn-info text-white btn-sm px-3">
+                  <i class="bi bi-plus-lg me-1"></i> Save Educational Resource
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Question Form -->
+    <div class="accordion-item border rounded overflow-hidden">
+      <h2 class="accordion-header" id="headingAddQ">
+        <button class="accordion-button collapsed py-2 bg-light fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAddQ">
+          <i class="bi bi-question-circle me-2 text-primary"></i> Add New Diagnostic Question
+        </button>
+      </h2>
+      <div id="collapseAddQ" class="accordion-collapse collapse" data-bs-parent="#manualEntryAccordion">
+        <div class="accordion-body p-3">
+          <form method="POST" action="{{ url_for('admin_add_question') }}">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Topic</label>
+                <select name="topic_id" class="form-select" required>
+                  {% for top in topics %}
+                    <option value="{{ top.id }}">{{ top.unit_ref.subject_ref.name }} &rarr; {{ top.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Difficulty</label>
+                <select name="difficulty" class="form-select" required>
+                  <option value="Easy">Easy</option>
+                  <option value="Medium" selected>Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-semibold">Question Text</label>
+                <textarea name="question_text" class="form-control" rows="2" placeholder="Enter question formulation..." required></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Option A</label>
+                <input type="text" name="option_a" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Option B</label>
+                <input type="text" name="option_b" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Option C</label>
+                <input type="text" name="option_c" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Option D</label>
+                <input type="text" name="option_d" class="form-control" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Correct Option</label>
+                <select name="correct_answer" class="form-select" required>
+                  <option value="A">Option A</option>
+                  <option value="B">Option B</option>
+                  <option value="C">Option C</option>
+                  <option value="D">Option D</option>
+                </select>
+              </div>
+              <div class="col-md-8 d-flex align-items-end justify-content-end">
+                <button type="submit" class="btn btn-primary">Save Question to Bank</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Curriculum & Subjects Management Table (Admin Only) -->
+<div class="card card-modern p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+      <h5 class="fw-bold mb-1"><i class="bi bi-book-half text-primary me-2"></i>Curriculum & Subjects Management</h5>
+      <p class="text-muted small mb-0">
+        Review, add, and delete syllabus subjects. <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1"><i class="bi bi-shield-lock me-1"></i>Delete restricted to Admin only</span>
+      </p>
+    </div>
+    <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAddSubj" aria-expanded="false" aria-controls="collapseAddSubj">
+      <i class="bi bi-plus-lg me-1"></i> Add New Subject
+    </button>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 50px;">#</th>
+          <th>Branch & Semester</th>
+          <th>Subject Name</th>
+          <th>Course Code</th>
+          <th class="text-center">Units</th>
+          <th class="text-center">Questions</th>
+          <th class="text-end" style="width: 140px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if not subjects %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">No subjects registered yet. Use the Add Subject form above or import a syllabus CSV.</td>
+          </tr>
+        {% else %}
+          {% for subj in subjects %}
+            <tr>
+              <td class="text-muted small">{{ loop.index }}</td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ subj.semester_ref.branch.name if subj.semester_ref and subj.semester_ref.branch else 'AI&DS' }}</span>
+                <span class="badge bg-secondary-subtle text-secondary border">{{ subj.semester_ref.name if subj.semester_ref else 'N/A' }}</span>
+              </td>
+              <td>
+                <strong class="text-dark">{{ subj.name }}</strong>
+              </td>
+              <td>
+                {% if subj.code %}
+                  <span class="badge bg-primary-subtle text-primary border font-monospace">{{ subj.code }}</span>
+                {% else %}
+                  <span class="text-muted small">&mdash;</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <span class="badge bg-light text-dark border">{{ subj.units|length }} Units</span>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-info-subtle text-info border border-info-subtle">{{ subj.question_count }} Qs</span>
+              </td>
+              <td class="text-end">
+                <div class="d-flex justify-content-end align-items-center gap-1">
+                  <a href="{{ url_for('syllabus_view', semester_id=subj.semester_id) }}" class="btn btn-sm btn-outline-secondary" title="View in Syllabus">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <form method="POST" action="{{ url_for('admin_delete_subject', subject_id=subj.id) }}" class="d-inline" onsubmit="return confirm('WARNING: Are you sure you want to permanently delete subject &quot;{{ subj.name }}&quot; ({{ subj.code }}) along with all its units, topics, and questions? This action is strictly restricted to Admins and cannot be undone.');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Subject (Admin Only)">
+                      <i class="bi bi-trash3-fill me-1"></i>Delete
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Curated Learning Resources Management Table (Admin Only) -->
+<div class="card card-modern p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+      <h5 class="fw-bold mb-1"><i class="bi bi-mortarboard-fill text-info me-2"></i>Curated Learning Resources Repository</h5>
+      <p class="text-muted small mb-0">
+        Review, verify, and manage learning resources (GeeksforGeeks, YouTube, NPTEL, Docs) linked to curriculum topics.
+      </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <input type="text" id="resourceFilterInput" class="form-control form-control-sm" placeholder="Filter resources..." onkeyup="filterResourceTable()">
+      <button class="btn btn-info text-white btn-sm text-nowrap" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAddRes">
+        <i class="bi bi-plus-lg me-1"></i> Add Resource
+      </button>
+    </div>
+  </div>
+
+  <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+    <table class="table table-hover align-middle mb-0" id="resourceTable">
+      <thead class="table-light sticky-top">
+        <tr>
+          <th style="width: 45px;">#</th>
+          <th>Syllabus Topic & Subject</th>
+          <th>Title & Provider</th>
+          <th>Type</th>
+          <th>Difficulty</th>
+          <th>Status</th>
+          <th class="text-end" style="width: 140px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if not resources %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">No educational resources cataloged yet.</td>
+          </tr>
+        {% else %}
+          {% for res in resources %}
+            <tr>
+              <td class="text-muted small">{{ loop.index }}</td>
+              <td>
+                <div class="fw-semibold text-dark">{{ res.topic_ref.name if res.topic_ref else 'Unknown Topic' }}</div>
+                <div class="small text-muted">{{ res.topic_ref.unit_ref.subject_ref.name if res.topic_ref and res.topic_ref.unit_ref else '' }}</div>
+              </td>
+              <td>
+                <div class="fw-bold text-dark">{{ res.title }}</div>
+                <div class="small text-secondary">
+                  <span class="badge bg-light text-dark border me-1">{{ res.provider }}</span>
+                  {% if res.language %}<span class="badge bg-light text-muted border font-monospace">{{ res.language }}</span>{% endif %}
+                </div>
+              </td>
+              <td>
+                {% if res.resource_type == 'video' %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-film me-1"></i>Video</span>
+                {% elif res.resource_type == 'notes' %}
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="bi bi-journal-text me-1"></i>Notes</span>
+                {% elif res.resource_type == 'documentation' %}
+                  <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="bi bi-file-earmark-code me-1"></i>Docs</span>
+                {% else %}
+                  <span class="badge bg-warning-subtle text-warning border border-warning-subtle"><i class="bi bi-check-circle me-1"></i>Practice</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ res.difficulty }}</span>
+              </td>
+              <td>
+                <form method="POST" action="{{ url_for('admin_toggle_verify_resource', resource_id=res.id) }}" class="d-inline">
+                  {% if res.verification_status == 'verified' %}
+                    <button type="submit" class="btn btn-xs badge bg-success text-white border-0 py-1 px-2" title="Click to unverify">
+                      <i class="bi bi-patch-check-fill me-1"></i>Verified
+                    </button>
+                  {% else %}
+                    <button type="submit" class="btn btn-xs badge bg-warning text-dark border-0 py-1 px-2" title="Click to verify">
+                      <i class="bi bi-clock-history me-1"></i>Unverified
+                    </button>
+                  {% endif %}
+                </form>
+              </td>
+              <td class="text-end">
+                <div class="d-flex justify-content-end align-items-center gap-1">
+                  <a href="{{ res.resource_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary" title="Open Resource URL">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                  </a>
+                  <form method="POST" action="{{ url_for('admin_delete_resource', resource_id=res.id) }}" class="d-inline" onsubmit="return confirm('Delete resource &quot;{{ res.title }}&quot;?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Resource">
+                      <i class="bi bi-trash3-fill"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Student Records Table -->
+<div class="card card-modern p-4">
+  <h5 class="fw-bold mb-3"><i class="bi bi-people text-primary me-2"></i>Registered Student Records</h5>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Student ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Branch</th>
+          <th>Semester</th>
+          <th>Learning Preference</th>
+          <th>Attempts</th>
+          <th>Role</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+          <tr>
+            <td><strong>{{ s.student_id }}</strong></td>
+            <td>{{ s.name }}</td>
+            <td class="small text-muted">{{ s.email }}</td>
+            <td class="small">{{ s.branch_ref.code if s.branch_ref else 'N/A' }}</td>
+            <td class="small">{{ s.semester_ref.name if s.semester_ref else 'N/A' }}</td>
+            <td>
+              <span class="badge bg-info-subtle text-info border border-info-subtle text-capitalize">
+                {{ s.learning_preference if s.learning_preference else 'both' }}
+              </span>
+            </td>
+            <td><span class="badge bg-secondary">{{ s.test_attempts|length }}</span></td>
+            <td>
+              <span class="badge {% if s.role == 'admin' %}bg-warning text-dark{% else %}bg-light text-dark border{% endif %}">
+                {{ s.role }}
+              </span>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function filterResourceTable() {
+  const input = document.getElementById("resourceFilterInput").value.toUpperCase();
+  const table = document.getElementById("resourceTable");
+  const tr = table.getElementsByTagName("tr");
+  for (let i = 1; i < tr.length; i++) {
+    const text = tr[i].textContent || tr[i].innerText;
+    if (text.toUpperCase().indexOf(input) > -1) {
+      tr[i].style.display = "";
+    } else {
+      tr[i].style.display = "none";
+    }
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,79 @@
+﻿Semester,Course Category,Course Code,Course Name,L,P,CA,MSE,ESE,Credit
+1,BSC,24AF1000BS101,Engineering Mathematics - I,3,0,20,20,60,3
+1,BSC,24AF1CHEBS102,Engineering Chemistry,3,0,20,20,60,3
+1,BSC,24AF1CHEBS103L,Engineering Chemistry Lab,0,2,40,0,60,1
+1,ESC,24AF1EMES104,Engineering Mechanics,3,0,20,20,60,3
+1,ESC,24AF1EMES105L,Engineering Mechanics Lab,0,2,40,0,60,1
+1,ESC,24AF1000ES106,Programming for Problem Solving,2,0,20,20,60,2
+1,ESC,24AF1000ES107L,Programming for Problem Solving Lab,0,2,40,0,60,1
+1,VSEC,24AF1000VS108L,Workshop Practices,0,4,40,0,60,2
+1,AEC-01,24AF1000VS109,Communication Skills,2,0,20,20,60,2
+1,AEC-01,24AF1000VS110L,Communication Skills Lab,0,2,40,0,60,1
+1,CC,24AF1000CC111,A. Yoga Education / B. NSS-I / C. NCC,1,2,40,0,60,2
+2,BSC,24AF1000BS201,Engineering Mathematics - II,3,0,20,20,60,3
+2,BSC,24AF2PHYBS202,Engineering Physics,3,0,20,20,60,3
+2,BSC,24AF2PHYBS203L,Engineering Physics Lab,0,2,40,0,60,1
+2,ESC,24AF2EGRES204,Engineering Graphics,2,0,20,20,60,2
+2,ESC,24AF2EGRES205L,Engineering Graphics Lab,0,2,40,0,60,1
+2,ESC,24AF1000ES206,Basic Electrical and Electronics Engineering,3,0,20,20,60,3
+2,ESC,24AF1000ES207L,Basic Electrical and Electronics Engineering Lab,0,2,40,0,60,1
+2,ESC,24AF2CMEES208,Basic Civil and Mechanical Engineering,3,0,20,20,60,3
+2,BSC,24AF1EEEES209,Energy and Environmental Engineering,2,0,20,20,60,AU
+2,IKS,24AF1000IK210,IKS Bucket,2,0,20,20,60,2
+2,VSEC,24AF1000VS211,Design Thinking,2,0,20,20,60,2
+2,CC,24AF1000CC212,A. Integrated Personality Development / B. NSS-II / C. Health and Wellness,1,2,40,0,60,2
+3,BSC,25AF1000BS301,Engineering Mathematics-III,3,0,20,20,60,3
+3,PCC1,25AF1245PC302,Data Structures,3,0,20,20,60,3
+3,PCC2,25AF1245PC303,Discrete Mathematics,3,0,20,20,60,3
+3,PCC3,25AFAIPC304,Artificial Intelligence,2,0,20,20,60,2
+3,OE-I,25AF1XXXOEM305X,Any Course from the Open Elective Bucket,2,0,20,20,60,2
+3,MDM,25AFAIMD306,Multi-Disciplinary Minor Course,0,0,20,20,60,0
+3,PCC4,25AFAIPC307,Prompt Engineering,2,0,20,20,60,2
+3,VEC,25AF1000VE308A,Life of Chhatrapati Shivaji Maharaj,1,0,50,0,0,1
+3,PCC Lab,25AFAIPCL309,Data Structures Laboratory with Python,1,4,60,0,40,3
+3,VEC,25AF1000VE310,Universal Human Values-II,3,0,20,20,60,3
+3,VEC,25AFAIPCL311,Artificial Intelligence Laboratory,0,2,60,0,40,1
+4,PCC1,25AFAIPC401,Introduction to Operating Systems,3,0,20,20,60,3
+4,PCC2,25AFAIPC402,Data Analytics,3,0,20,20,60,3
+4,PCC3,25AF1245PC403,Probability and Statistics,3,0,20,20,60,3
+4,PCC Lab,25AFAIPCL404,Full Stack Development,1,2,60,0,40,2
+4,OE-II,25AF1XXXOEM405X,Any Course from the Open Elective Bucket,2,0,20,20,60,2
+4,MDM,25AFAIMD406,Multi-Disciplinary Minor Course,0,0,20,20,60,0
+4,VSEC,25AFCOIAE407,Constitution of India,2,0,50,0,0,Audit
+4,VSEC,25AF1000VE308B,Life of Bharat Ratna Dr. Babasaheb Ambedkar,1,0,50,0,0,1
+4,PCC Lab,25AFAIPCL409,Introduction to Operating Systems Laboratory,0,2,60,0,40,1
+4,AEC,25AF1000VE410,Modern Indian Languages (A. Marathi / B. Hindi / C. Sanskrit),2,0,20,20,60,2
+4,VSEC (Exit Option),23AFAIVE411,LLM Course with Programming,0,16,60,0,40,8
+5,PCC1,26AF1245PC501,Machine Learning,3,0,20,20,60,3
+5,PCC2,26AFAIPC502,Object Oriented Programming in Java,3,0,20,20,60,3
+5,PCC3,26AFAIPC503,Cloud and Distributed AI Systems,3,0,20,20,60,3
+5,PCC4,26AFAIPC504,Data Engineering and Big Data Systems,3,0,20,20,60,3
+5,OE-III,26AF1XXXOEM505X,Open Elective Bucket,2,0,20,20,60,2
+5,MDM,26AFAIMD506,MDM Bucket,0,0,20,20,60,0
+5,PEC,26AFAIPE507,Program Elective: A. Vector Databases / B. Human Computer Interaction / C. AI for Cybersecurity,2,0,20,20,60,2
+5,PCC Lab,26AF1245PCL508,Machine Learning Laboratory,0,2,20,20,60,1
+5,PCC Lab,26AFAIPCL509,MLOps Laboratory,1,2,60,0,40,2
+5,CEP/FP,25AFAIAE510,Seminar and Mini Project,0,2,60,0,40,1
+6,PCC1,26AFAIPC601,Deep Learning,3,0,20,20,60,3
+6,PCC2,26AFAIPC602,Natural Language Processing,3,0,20,20,60,3
+6,PCC3,26AFAIPC603,Fundamental Edge AI,3,0,20,20,60,3
+6,PEC,26AFAIPC604,Program Elective: A. Information Security and Privacy / B. Cyber Physical Systems / C. Optimization Techniques,3,0,20,20,60,3
+6,OE-IV,26AF1XXXOEM605X,Open Elective Basket,2,0,20,20,60,2
+6,MDM,26AFAIMD606,MDM Bucket,0,0,20,20,60,0
+6,PCC Lab,26AFAIPCL607,Deep Learning Laboratory,0,4,60,0,40,2
+6,PCC Lab,26AFAIPCL608,Natural Language Processing Laboratory,0,2,60,0,40,1
+6,AEC,26AFAIAE609,Modern AI Web Application based Project,1,2,60,0,40,2
+6,VSEC (Exit Option),23AFAIVE610,"Project based on MLOps, LLM or Deep learning",0,16,60,0,40,8
+7,PCC,27AFXXXXPC701,AI Ethics,3,0,20,20,60,3
+7,PEC,27AFXXXXPC702,Program Elective: A. Graphical Neural Networks / B. Quantum AI / C. AI Governance,2,0,20,20,60,2
+7,PCC Lab,27AFXXXXMD703,Computer Vision,0,2,60,0,40,1
+7,Project,27AFXXXXP704,Project-Phase I,0,4,60,0,40,2
+7,MDM,27AFXXXXPC705,MDM Bucket,0,0,20,20,60,0
+7,Internship,27AFXXXX0706,Internship,0,24,60,0,40,12
+7,PCC Lab,27AFXXXXPCL707,Mobile Application Development,1,2,40,0,60,2
+8,PCC,27AXXXXPC801,AI Governance,3,0,20,20,60,3
+8,PCC,27AFXXXXPE802,Program Elective: A. Generative AI / B. Graphical Neural Networks / C. AI for Social Good,3,0,20,20,60,2
+8,PEC,27AXXXXPE803,Program Elective: A. Quantum Machine Learning / B. Business Analytics / C. Learning Analytics,3,0,20,20,60,2
+8,MDM,27AFXXXXMD804,MDM Bucket,2,0,40,0,60,2
+8,RM,27AFXXXXRM805,Research Methodology,3,2,40,0,60,4
+8,PCC Lab,27AFXXXXPL806,Project Phase - II,0,4,40,0,60,2

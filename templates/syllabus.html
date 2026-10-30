@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Curriculum Syllabus - EduAI Recommender{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+  <div>
+    <h3 class="fw-bold mb-1"><i class="bi bi-book-half text-primary me-2"></i>Curriculum Syllabus</h3>
+    <p class="text-muted small mb-0">
+      Viewing curriculum for: <strong>{{ semester.branch.name }}</strong> &bull;
+      <strong>{{ semester.year_ref.name }}</strong> &bull;
+      <span class="badge bg-primary fs-6">{{ semester.name }}</span>
+    </p>
+  </div>
+  <div class="d-flex align-items-center flex-wrap gap-2">
+    <!-- Semester Switcher Dropdown -->
+    {% if all_semesters and all_semesters|length > 1 %}
+      <div class="dropdown">
+        <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" data-bs-toggle="dropdown">
+          <i class="bi bi-calendar3 me-1"></i> Switch Semester
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+          {% for sem in all_semesters %}
+            <li>
+              <a class="dropdown-item {% if sem.id == semester.id %}active{% endif %}" href="{{ url_for('syllabus_view', semester_id=sem.id) }}">
+                {{ sem.name }} ({{ sem.branch.code }})
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <a href="{{ url_for('take_test') }}" class="btn btn-primary fw-semibold btn-sm">
+      <i class="bi bi-play-circle-fill me-1"></i> Full Diagnostic Test
+    </a>
+
+    {% if session.get('user_role') == 'admin' %}
+      <button type="button" class="btn btn-success fw-semibold btn-sm" data-bs-toggle="modal" data-bs-target="#addSubjectModal">
+        <i class="bi bi-plus-circle-fill me-1"></i> Add Subject
+      </button>
+      <a href="{{ url_for('admin_view') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-shield-lock me-1"></i> Admin Portal
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+{% if not subjects %}
+  <div class="card card-modern p-5 text-center">
+    <i class="bi bi-journal-x text-warning fs-1 mb-3"></i>
+    <h4 class="fw-bold">No Syllabus Data Loaded Yet</h4>
+    <p class="text-muted">There are no subjects registered for {{ semester.name }} in the database.</p>
+    {% if session.get('user_role') == 'admin' %}
+      <div class="d-flex justify-content-center gap-2 mt-2">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSubjectModal">
+          <i class="bi bi-plus-lg me-1"></i> Add Subject to {{ semester.name }}
+        </button>
+        <a href="{{ url_for('admin_view') }}" class="btn btn-outline-secondary">Go to Admin Portal</a>
+      </div>
+    {% endif %}
+  </div>
+{% else %}
+  <div class="row g-4">
+    {% for subj in subjects %}
+      <div class="col-lg-6">
+        <div class="card card-modern h-100 d-flex flex-column">
+          <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-journal-code text-primary"></i>
+                {{ subj.name }}
+              </h5>
+              <div class="d-flex align-items-center gap-2">
+                {% if subj.code %}
+                  <span class="badge bg-primary-subtle text-primary border font-monospace">{{ subj.code }}</span>
+                {% endif %}
+                <span class="badge bg-light text-muted border small">{{ subj.units|length }} Units</span>
+                <span class="badge bg-info-subtle text-info border border-info-subtle small">{{ subj.question_count }} Questions</span>
+              </div>
+            </div>
+            {% if session.get('user_role') == 'admin' %}
+              <form method="POST" action="{{ url_for('admin_delete_subject', subject_id=subj.id) }}" class="d-inline" onsubmit="return confirm('WARNING: Are you sure you want to permanently delete &quot;{{ subj.name }}&quot; ({{ subj.code }}) along with all its units, topics, and questions? Only Admin can do this.');">
+                <input type="hidden" name="next" value="{{ request.full_path or request.url }}">
+                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Subject (Admin Only)">
+                  <i class="bi bi-trash3-fill"></i>
+                </button>
+              </form>
+            {% endif %}
+          </div>
+
+          <div class="card-body p-4 flex-grow-1">
+            {% if not subj.units %}
+              <p class="text-muted small mb-0">No syllabus units registered for this subject yet.</p>
+            {% else %}
+              <div class="accordion accordion-flush" id="accSubj{{ subj.id }}">
+                {% for unit in subj.units %}
+                  <div class="accordion-item border rounded mb-2 overflow-hidden">
+                    <h2 class="accordion-header" id="heading{{ unit.id }}">
+                      <button class="accordion-button {% if not loop.first %}collapsed{% endif %} py-2 bg-light fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ unit.id }}">
+                        <i class="bi bi-folder2-open text-primary me-2"></i> {{ unit.unit_number }}
+                      </button>
+                    </h2>
+                    <div id="collapse{{ unit.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" data-bs-parent="#accSubj{{ subj.id }}">
+                      <div class="accordion-body p-3 bg-white">
+                        <ul class="list-group list-group-flush">
+                          {% for topic in unit.topics %}
+                            <li class="list-group-item px-1 py-2">
+                              <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                  <div class="fw-bold text-dark mb-1">
+                                    <i class="bi bi-dot text-primary fs-5"></i>{{ topic.name }}
+                                  </div>
+                                  {% if topic.subtopics %}
+                                    <div class="d-flex flex-wrap gap-1 ps-3">
+                                      {% for sub in topic.subtopics.split(';') %}
+                                        <span class="badge bg-light text-muted border small">{{ sub.strip() }}</span>
+                                      {% endfor %}
+                                    </div>
+                                  {% endif %}
+                                </div>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">
+                                  {{ topic.questions|length }} Qs
+                                </span>
+                              </div>
+                            </li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Subject Action Footer -->
+          <div class="card-footer bg-light border-top p-3 d-flex justify-content-between align-items-center">
+            <span class="text-muted small">
+              <i class="bi bi-mortarboard me-1"></i> DBATU AI&DS Syllabus
+            </span>
+            <div class="d-flex align-items-center gap-2">
+              <a href="{{ url_for('take_test', subject_id=subj.id) }}" class="btn btn-sm btn-primary fw-semibold">
+                <i class="bi bi-pencil-square me-1"></i> Take Subject Test ({{ subj.question_count }} Qs)
+              </a>
+              {% if session.get('user_role') == 'admin' %}
+                <form method="POST" action="{{ url_for('admin_delete_subject', subject_id=subj.id) }}" class="d-inline" onsubmit="return confirm('WARNING: Are you sure you want to permanently delete subject &quot;{{ subj.name }}&quot; ({{ subj.code }}) along with all its units, topics, and questions? Only Admin can do this.');">
+                  <input type="hidden" name="next" value="{{ request.full_path or request.url }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash3-fill me-1"></i> Delete
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<!-- Add Subject Modal (Admin Only) -->
+{% if session.get('user_role') == 'admin' %}
+<div class="modal fade" id="addSubjectModal" tabindex="-1" aria-labelledby="addSubjectModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin_add_subject') }}">
+        <input type="hidden" name="semester_id" value="{{ semester.id }}">
+        <input type="hidden" name="next" value="{{ request.full_path or request.url }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="addSubjectModalLabel">
+            <i class="bi bi-plus-circle text-success me-2"></i>Add Subject to {{ semester.name }}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Target Semester</label>
+            <input type="text" class="form-control" value="{{ semester.branch.name }} - {{ semester.name }}" disabled>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Subject Name <span class="text-danger">*</span></label>
+            <input type="text" name="subject_name" class="form-control" placeholder="e.g. Machine Learning" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">DBATU Course Code (Optional)</label>
+            <input type="text" name="subject_code" class="form-control" placeholder="e.g. 26AF1245PC501">
+            <div class="form-text small">If left blank, an official code will be automatically assigned.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success fw-semibold">
+            <i class="bi bi-plus-lg me-1"></i> Add Subject
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

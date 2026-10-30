@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Student Registration - EduAI Recommender{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-3">
+  <div class="col-md-8 col-lg-6">
+    <div class="card card-modern p-4 p-md-5">
+      <div class="text-center mb-4">
+        <div class="rounded-circle bg-primary-subtle text-primary mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px;">
+          <i class="bi bi-person-plus-fill fs-3"></i>
+        </div>
+        <h3 class="fw-bold">Student Registration</h3>
+        <p class="text-muted small">Create your student profile to access personalized AI learning recommendations</p>
+      </div>
+
+      <form method="POST" action="{{ url_for('register') }}">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <label class="form-label fw-semibold">Student ID <span class="text-danger">*</span></label>
+            <input type="text" name="student_id" class="form-control" placeholder="e.g. S002" required>
+            <div class="form-text">Unique college ID or anonymous identifier</div>
+          </div>
+
+          <div class="col-sm-6">
+            <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. Priya Patel" required>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+            <input type="email" name="email" class="form-control" placeholder="student@college.edu" required>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+            <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+          </div>
+
+          <hr class="my-3">
+          <h6 class="fw-bold text-primary mb-2"><i class="bi bi-mortarboard-fill me-1"></i> Academic Enrollment</h6>
+
+          <div class="col-12">
+            <label class="form-label fw-semibold">Branch <span class="text-danger">*</span></label>
+            <select name="branch_id" class="form-select" id="branchSelect" required>
+              {% for b in branches %}
+                <option value="{{ b.id }}" {% if b.name == 'Artificial Intelligence & Data Science' %}selected{% endif %}>
+                  {{ b.name }} ({{ b.code }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-sm-6">
+            <label class="form-label fw-semibold">Academic Year <span class="text-danger">*</span></label>
+            <select name="year_id" class="form-select" id="yearSelect" required>
+              {% for y in years %}
+                <option value="{{ y.id }}" {% if y.name == 'Third Year' %}selected{% endif %}>
+                  {{ y.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-sm-6">
+            <label class="form-label fw-semibold">Semester <span class="text-danger">*</span></label>
+            <select name="semester_id" class="form-select" id="semesterSelect" required>
+              {% for s in semesters %}
+                <option value="{{ s.id }}" {% if s.name == 'Semester V' %}selected{% endif %}>
+                  {{ s.name }} ({{ s.code }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <hr class="my-3">
+          <h6 class="fw-bold text-primary mb-1"><i class="bi bi-journal-bookmark-fill me-1"></i> Preferred Learning Method</h6>
+          <p class="text-muted small mb-2">You can change this anytime from your profile or recommendations dashboard.</p>
+
+          <div class="col-12">
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label class="card p-2 border rounded cursor-pointer h-100" style="cursor: pointer;">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="learning_preference" id="prefNotes" value="notes">
+                    <label class="form-check-label small fw-semibold" for="prefNotes">
+                      <i class="bi bi-file-earmark-text text-primary"></i> Theory Notes
+                    </label>
+                    <div class="text-muted" style="font-size: 0.75rem;">Reading concepts & code</div>
+                  </div>
+                </label>
+              </div>
+              <div class="col-md-4">
+                <label class="card p-2 border rounded cursor-pointer h-100" style="cursor: pointer;">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="learning_preference" id="prefVideos" value="videos">
+                    <label class="form-check-label small fw-semibold" for="prefVideos">
+                      <i class="bi bi-play-circle text-danger"></i> Video Lectures
+                    </label>
+                    <div class="text-muted" style="font-size: 0.75rem;">Visual & tutorials</div>
+                  </div>
+                </label>
+              </div>
+              <div class="col-md-4">
+                <label class="card p-2 border rounded cursor-pointer h-100 bg-primary-subtle border-primary" style="cursor: pointer;">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="learning_preference" id="prefBoth" value="both" checked>
+                    <label class="form-check-label small fw-semibold text-primary-emphasis" for="prefBoth">
+                      <i class="bi bi-collection-play text-success"></i> Both (Default)
+                    </label>
+                    <div class="text-muted" style="font-size: 0.75rem;">Notes & videos together</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 mt-4">
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+              <i class="bi bi-check-circle-fill me-1"></i> Create Student Account
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <div class="text-center mt-4">
+        <span class="text-muted small">Already have an account?</span>
+        <a href="{{ url_for('login') }}" class="fw-semibold text-decoration-none ms-1">Sign in here</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Personalized Dashboard - EduAI Recommender{% endblock %}
+
+{% block content %}
+<!-- Student Profile Banner -->
+<div class="card card-modern p-4 mb-4">
+  <div class="row align-items-center">
+    <div class="col-md-7">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-3" style="width: 58px; height: 58px;">
+          {{ student.name[:1] }}
+        </div>
+        <div>
+          <h4 class="fw-bold mb-1">{{ student.name }}</h4>
+          <p class="text-muted small mb-0">
+            <span class="badge bg-light text-dark border me-1">Student ID: {{ student.student_id }}</span>
+            <span class="text-secondary">&bull;</span> {{ student.branch_ref.name if student.branch_ref else 'N/A' }}
+            <span class="text-secondary">&bull;</span> {{ student.year_ref.name if student.year_ref else 'N/A' }}
+            <span class="text-secondary">&bull;</span> <strong class="text-primary">{{ student.semester_ref.name if student.semester_ref else 'N/A' }}</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0">
+      <div class="d-flex justify-content-md-end gap-2 flex-wrap">
+        <a href="{{ url_for('recommendations_view') }}" class="btn btn-primary">
+          <i class="bi bi-lightbulb-fill me-1"></i> AI Recommendations
+        </a>
+        <a href="{{ url_for('take_test') }}?retest=1" class="btn btn-success fw-semibold">
+          <i class="bi bi-arrow-repeat me-1"></i> Take Re-Test
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if not latest_attempt %}
+  <div class="card card-modern p-5 text-center my-4">
+    <i class="bi bi-clipboard2-check text-primary fs-1 mb-3"></i>
+    <h4 class="fw-bold">No Diagnostic Test Taken Yet</h4>
+    <p class="text-muted mb-4">Take your initial diagnostic test to activate personalized AI analytics and recommendations.</p>
+    <div>
+      <a href="{{ url_for('take_test') }}" class="btn btn-primary btn-lg px-4">
+        <i class="bi bi-play-circle-fill me-2"></i> Start Diagnostic Test Now
+      </a>
+    </div>
+  </div>
+{% else %}
+
+  <!-- KPI Metric Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+      <div class="card-kpi">
+        <div class="text-muted small fw-semibold">Latest Overall Score</div>
+        <div class="fs-2 fw-bold text-primary">{{ "%.1f"|format(latest_attempt.score_percentage) }}%</div>
+        <div class="small text-muted">Attempt #{{ latest_attempt.attempt_number }} ({{ latest_attempt.attempt_type }})</div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+      <div class="card-kpi weak">
+        <div class="text-muted small fw-semibold">Weak Topics (&lt;40%)</div>
+        <div class="fs-2 fw-bold text-danger">{{ counts.weak }}</div>
+        <div class="small text-muted">Requires core revision</div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+      <div class="card-kpi average">
+        <div class="text-muted small fw-semibold">Average Topics (40-70%)</div>
+        <div class="fs-2 fw-bold text-warning">{{ counts.average }}</div>
+        <div class="small text-muted">Requires practice drills</div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+      <div class="card-kpi strong">
+        <div class="text-muted small fw-semibold">Strong Topics (&gt;70%)</div>
+        <div class="fs-2 fw-bold text-success">{{ counts.strong }}</div>
+        <div class="small text-muted">Ready for advanced tasks</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1: Subject Performance & Distribution -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-8">
+      <div class="card card-modern p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Subject-Wise Performance</h5>
+          <span class="badge bg-light text-muted border">6 Semester Subjects</span>
+        </div>
+        <div class="chart-container" style="min-height: 280px;">
+          <canvas id="subjectPerformanceChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card card-modern p-4 h-100">
+        <h5 class="fw-bold mb-3"><i class="bi bi-pie-chart-fill text-primary me-2"></i>Topic Classification Ratio</h5>
+        <div class="chart-container" style="min-height: 240px;">
+          <canvas id="distributionDoughnutChart"></canvas>
+        </div>
+        <div class="text-center mt-2 small text-muted">
+          Weak (&lt;40%) &bull; Average (40-70%) &bull; Strong (&gt;70%)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2: Topic Performance & Progress Comparison -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-7">
+      <div class="card card-modern p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-graph-up text-primary me-2"></i>Topic-Wise Accuracy (Weakest First)</h5>
+          <span class="badge bg-light text-muted border">18 Topics</span>
+        </div>
+        <div class="chart-container" style="min-height: 380px;">
+          <canvas id="topicPerformanceChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card card-modern p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-activity text-primary me-2"></i>Score Progression Over Attempts</h5>
+          <a href="{{ url_for('progress_view') }}" class="btn btn-sm btn-outline-primary">Details</a>
+        </div>
+        <div class="chart-container" style="min-height: 260px;">
+          <canvas id="progressComparisonChart"></canvas>
+        </div>
+        {% if attempts|length > 1 %}
+          <div class="alert alert-success mt-3 py-2 small mb-0">
+            <i class="bi bi-arrow-up-circle-fill me-1"></i>
+            Progress tracked across <strong>{{ attempts|length }} attempts</strong>.
+            Improvement: <strong>{{ "%.1f"|format(improvement) }}%</strong>
+          </div>
+        {% else %}
+          <div class="alert alert-info mt-3 py-2 small mb-0">
+            <i class="bi bi-info-circle me-1"></i>
+            Take a <strong>Re-Test</strong> after reviewing recommendations to see your score improvement curve.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Weak Topics Priority Action Section -->
+  <div class="card card-modern p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <div>
+        <h5 class="fw-bold text-danger mb-1">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>Priority Weak Topics Requiring Attention
+        </h5>
+        <p class="text-muted small mb-0">These topics scored below 40% in your latest diagnostic test. Review them before taking a re-test.</p>
+      </div>
+      <a href="{{ url_for('recommendations_view') }}" class="btn btn-sm btn-danger fw-semibold">
+        View All Learning Recommendations &rarr;
+      </a>
+    </div>
+
+    {% if not weak_topics %}
+      <div class="alert alert-success mb-0">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        Outstanding work! You have zero weak topics (&lt;40%) in your latest diagnostic test.
+      </div>
+    {% else %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Priority</th>
+              <th>Topic</th>
+              <th>Subject</th>
+              <th>Score</th>
+              <th>Accuracy</th>
+              <th>AI Recommendation</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in weak_topics %}
+              <tr>
+                <td><span class="badge bg-danger rounded-pill">#{{ loop.index }}</span></td>
+                <td class="fw-semibold">{{ t.topic_name }}</td>
+                <td class="small text-muted">{{ t.subject_name }}</td>
+                <td>{{ t.correct_answers }} / {{ t.total_questions }}</td>
+                <td><span class="badge badge-weak">{{ "%.1f"|format(t.accuracy) }}%</span></td>
+                <td class="small text-dark"><strong>Revision Needed:</strong> Core fundamentals & worked examples</td>
+                <td>
+                  <a href="{{ url_for('recommendations_view') }}#topic_{{ t.topic_id }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-book me-1"></i> Study Plan
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </div>
+
+{% endif %}
+
+<!-- Inject Data for Chart.js -->
+<script>
+  window.dashboardData = {
+    subjects: {{ subjects_summary | tojson }},
+    topics: {{ topics_summary | tojson }},
+    counts: {{ counts | tojson }}
+  };
+  window.progressData = {
+    attempts: {{ attempts_summary | tojson }}
+  };
+</script>
+{% endblock %}

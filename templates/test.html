@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}{{ selected_subject.name ~ ' Assessment' if selected_subject else ('Re-Test Assessment' if is_retest else 'Diagnostic Test') }} - EduAI Recommender{% endblock %}
+
+{% block content %}
+<!-- Subject Filter Navigation Bar -->
+{% if semester_subjects and semester_subjects|length > 1 %}
+  <div class="card card-modern p-3 mb-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-filter-circle text-primary fs-5"></i>
+        <span class="small fw-bold text-dark">Subject-Specific Test (60 Questions):</span>
+      </div>
+      <div class="d-flex flex-wrap gap-1">
+        <a href="{{ url_for('take_test') }}" class="btn btn-sm {% if not selected_subject %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+          All Subjects
+        </a>
+        {% for subj in semester_subjects %}
+          <a href="{{ url_for('take_test', subject_id=subj.id) }}" class="btn btn-sm {% if selected_subject and selected_subject.id == subj.id %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            {{ subj.name }}
+            <span class="badge {% if selected_subject and selected_subject.id == subj.id %}bg-light text-primary{% else %}bg-secondary-subtle text-secondary border{% endif %} ms-1">
+              {{ subj.question_count }}
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<div class="row g-4">
+  <!-- Left/Main Question Area -->
+  <div class="col-lg-8">
+    <div class="card card-modern p-4 mb-4 border-primary">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <span class="badge {% if selected_subject %}bg-success{% else %}bg-primary{% endif %} px-3 py-2 mb-2">
+            <i class="bi bi-mortarboard-fill me-1"></i>
+            {% if selected_subject %}
+              Subject Diagnostic: {{ selected_subject.name }}
+            {% elif is_retest %}
+              Re-Test Assessment
+            {% else %}
+              Comprehensive Diagnostic Test (All Subjects)
+            {% endif %}
+          </span>
+          <h3 class="fw-bold mb-1">
+            {% if selected_subject %}{{ selected_subject.name }}{% else %}{{ semester.branch.name }}{% endif %}
+          </h3>
+          <p class="text-muted small mb-0">
+            {{ semester.year_ref.name }} &bull; {{ semester.name }}
+            {% if selected_subject and selected_subject.code %} &bull; <strong>Code: {{ selected_subject.code }}</strong>{% endif %}
+            &bull; <strong>{{ questions|length }} Questions</strong>
+          </p>
+        </div>
+        <div class="text-end">
+          <div class="badge bg-dark fs-6 py-2 px-3">
+            <i class="bi bi-clock me-1 text-warning"></i> <span id="timerDisplay">60:00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if not questions %}
+      <div class="alert alert-warning p-4">
+        <h5>No questions available for this selection.</h5>
+        <p>Please check with your administrator or select another subject from the bar above.</p>
+      </div>
+    {% else %}
+      <form id="testForm" method="POST" action="{{ url_for('submit_test') }}">
+        <input type="hidden" name="semester_id" value="{{ semester.id }}">
+        <input type="hidden" name="subject_id" value="{{ subject_id if subject_id else '' }}">
+        <input type="hidden" name="is_retest" value="{{ '1' if is_retest else '0' }}">
+
+        {% for q in questions %}
+          <div class="question-card" id="q_card_{{ loop.index }}">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <div>
+                <span class="badge bg-secondary me-1">Q{{ loop.index }} of {{ questions|length }}</span>
+                <span class="badge bg-light text-dark border">{{ q.topic_ref.unit_ref.subject_ref.name }}</span>
+                <span class="badge bg-info-subtle text-info border border-info-subtle">{{ q.topic_ref.name }}</span>
+              </div>
+              <div>
+                {% if q.difficulty == 'Easy' %}
+                  <span class="badge badge-diff-easy">Easy</span>
+                {% elif q.difficulty == 'Medium' %}
+                  <span class="badge badge-diff-medium">Medium</span>
+                {% else %}
+                  <span class="badge badge-diff-hard">Hard</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <h5 class="fw-bold text-dark mb-4">{{ q.question_text }}</h5>
+
+            <div class="options-container">
+              <label class="question-option d-flex align-items-center gap-3" for="q_{{ q.id }}_A">
+                <input class="form-check-input mt-0" type="radio" name="question_{{ q.id }}" id="q_{{ q.id }}_A" value="A" onchange="markAnswered({{ loop.index }})">
+                <span class="badge bg-light text-secondary border fw-bold">A</span>
+                <span class="option-text">{{ q.option_a }}</span>
+              </label>
+
+              <label class="question-option d-flex align-items-center gap-3" for="q_{{ q.id }}_B">
+                <input class="form-check-input mt-0" type="radio" name="question_{{ q.id }}" id="q_{{ q.id }}_B" value="B" onchange="markAnswered({{ loop.index }})">
+                <span class="badge bg-light text-secondary border fw-bold">B</span>
+                <span class="option-text">{{ q.option_b }}</span>
+              </label>
+
+              <label class="question-option d-flex align-items-center gap-3" for="q_{{ q.id }}_C">
+                <input class="form-check-input mt-0" type="radio" name="question_{{ q.id }}" id="q_{{ q.id }}_C" value="C" onchange="markAnswered({{ loop.index }})">
+                <span class="badge bg-light text-secondary border fw-bold">C</span>
+                <span class="option-text">{{ q.option_c }}</span>
+              </label>
+
+              <label class="question-option d-flex align-items-center gap-3" for="q_{{ q.id }}_D">
+                <input class="form-check-input mt-0" type="radio" name="question_{{ q.id }}" id="q_{{ q.id }}_D" value="D" onchange="markAnswered({{ loop.index }})">
+                <span class="badge bg-light text-secondary border fw-bold">D</span>
+                <span class="option-text">{{ q.option_d }}</span>
+              </label>
+            </div>
+          </div>
+        {% endfor %}
+
+        <div class="card card-modern p-4 mb-4 text-center">
+          <h5 class="fw-bold mb-2">Ready to complete your assessment?</h5>
+          <p class="text-muted small mb-3">Your responses will be evaluated using Pandas analytics and the Scikit-learn AI recommendation engine.</p>
+          <button type="button" class="btn btn-success btn-lg px-5 py-2 fw-semibold" onclick="confirmSubmission()">
+            <i class="bi bi-send-check-fill me-2"></i> Submit Test for AI Analysis
+          </button>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+
+  <!-- Right Sticky Palette / Progress Indicator -->
+  <div class="col-lg-4">
+    <div class="card card-modern p-4 sticky-top" style="top: 80px; z-index: 10;">
+      <h5 class="fw-bold mb-3 d-flex justify-content-between align-items-center">
+        <span>Question Palette</span>
+        <span class="badge bg-primary text-white" id="answeredBadge">0 / {{ questions|length }} Answered</span>
+      </h5>
+
+      <div class="progress progress-modern mb-3">
+        <div id="testProgressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+      </div>
+
+      <p class="small text-muted mb-2">Click any bubble to jump directly to that question:</p>
+
+      <div class="palette-grid d-flex flex-wrap gap-1 mb-4" style="max-height: 280px; overflow-y: auto;">
+        {% for q in questions %}
+          <a href="#q_card_{{ loop.index }}" id="bubble_{{ loop.index }}" class="test-nav-bubble">
+            {{ loop.index }}
+          </a>
+        {% endfor %}
+      </div>
+
+      <div class="d-grid gap-2">
+        <button type="button" class="btn btn-outline-primary" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">
+          <i class="bi bi-arrow-up"></i> Back to Top
+        </button>
+        <button type="button" class="btn btn-success fw-bold py-2" onclick="confirmSubmission()">
+          <i class="bi bi-check2-all me-1"></i> Submit Test Now
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Submit Confirmation Modal -->
+<div class="modal fade" id="submitModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold"><i class="bi bi-question-circle text-primary me-2"></i>Confirm Test Submission</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">Are you sure you want to finish and submit your test?</p>
+        <div class="alert alert-info py-2 small mb-0">
+          <span id="modalAnsweredCount">0</span> of {{ questions|length }} questions answered.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Review Answers</button>
+        <button type="button" class="btn btn-success fw-semibold" onclick="document.getElementById('testForm').submit()">
+          Yes, Submit Now
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let totalQuestions = {{ questions|length }};
+  let answeredQuestions = new Set();
+
+  function markAnswered(index) {
+    answeredQuestions.add(index);
+    const bubble = document.getElementById('bubble_' + index);
+    if (bubble) {
+      bubble.classList.add('answered');
+    }
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const count = answeredQuestions.size;
+    document.getElementById('answeredBadge').textContent = `${count} / ${totalQuestions} Answered`;
+    const pct = totalQuestions > 0 ? (count / totalQuestions) * 100 : 0;
+    document.getElementById('testProgressBar').style.width = pct + '%';
+  }
+
+  function confirmSubmission() {
+    document.getElementById('modalAnsweredCount').textContent = answeredQuestions.size;
+    const modal = new bootstrap.Modal(document.getElementById('submitModal'));
+    modal.show();
+  }
+
+  // Timer based on question count: 1 min per question, minimum 30 mins
+  let totalMinutes = Math.max(30, Math.ceil(totalQuestions * 1.0));
+  let timeLeft = totalMinutes * 60;
+  const timerInterval = setInterval(function() {
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      alert('Time is up! Submitting your test automatically.');
+      document.getElementById('testForm').submit();
+      return;
+    }
+    timeLeft--;
+    const mins = Math.floor(timeLeft / 60);
+    const secs = timeLeft % 60;
+    const display = document.getElementById('timerDisplay');
+    if (display) {
+      display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+  }, 1000);
+</script>
+{% endblock %}

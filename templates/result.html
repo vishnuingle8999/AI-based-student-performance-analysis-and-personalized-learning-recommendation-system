@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Test Results & Performance Summary - EduAI Recommender{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <!-- Result Header Card -->
+    <div class="card card-modern p-4 p-md-5 mb-4 text-center">
+      <div class="mb-3">
+        {% if attempt.score_percentage >= 70 %}
+          <div class="rounded-circle bg-success-subtle text-success mx-auto d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
+            <i class="bi bi-trophy-fill fs-2"></i>
+          </div>
+        {% elif attempt.score_percentage >= 40 %}
+          <div class="rounded-circle bg-warning-subtle text-warning mx-auto d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
+            <i class="bi bi-clipboard-data-fill fs-2"></i>
+          </div>
+        {% else %}
+          <div class="rounded-circle bg-danger-subtle text-danger mx-auto d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
+            <i class="bi bi-exclamation-triangle-fill fs-2"></i>
+          </div>
+        {% endif %}
+      </div>
+
+      <span class="badge bg-secondary-subtle text-secondary border px-3 py-1 rounded-pill mb-2">
+        Attempt #{{ attempt.attempt_number }} ({{ attempt.attempt_type|capitalize }}) &bull; {{ attempt.created_at.strftime('%b %d, %Y %I:%M %p') }}
+      </span>
+
+      <h2 class="fw-bold mb-1">Diagnostic Assessment Complete!</h2>
+      <p class="text-muted mb-4">Your responses have been evaluated and analyzed across all syllabus topics.</p>
+
+      <div class="row g-3 justify-content-center mb-4">
+        <div class="col-6 col-md-3">
+          <div class="p-3 bg-light rounded border">
+            <div class="text-muted small">Overall Score</div>
+            <div class="fs-2 fw-bold text-primary">{{ "%.1f"|format(attempt.score_percentage) }}%</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="p-3 bg-light rounded border">
+            <div class="text-muted small">Correct / Total</div>
+            <div class="fs-2 fw-bold text-dark">{{ attempt.correct_count }} / {{ attempt.total_questions }}</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="p-3 bg-light rounded border">
+            <div class="text-muted small">Weak Topics</div>
+            <div class="fs-2 fw-bold text-danger">{{ weak_count }}</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="p-3 bg-light rounded border">
+            <div class="text-muted small">Strong Topics</div>
+            <div class="fs-2 fw-bold text-success">{{ strong_count }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a href="{{ url_for('recommendations_view') }}" class="btn btn-primary btn-lg px-4 fw-semibold">
+          <i class="bi bi-lightbulb-fill me-2"></i> View AI Personalized Recommendations
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">
+          <i class="bi bi-speedometer2 me-2"></i> Go to Dashboard
+        </a>
+        <a href="{{ url_for('progress_view') }}" class="btn btn-outline-primary btn-lg px-4">
+          <i class="bi bi-graph-up me-2"></i> View Progress
+        </a>
+      </div>
+    </div>
+
+    <!-- Subject-wise Breakdown Table -->
+    <div class="card card-modern p-4 mb-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-mortarboard text-primary me-2"></i>Subject-wise Performance</h5>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Subject</th>
+              <th>Total Questions</th>
+              <th>Correct Answers</th>
+              <th>Accuracy</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in subjects_summary %}
+              <tr>
+                <td class="fw-semibold">{{ s.subject_name }}</td>
+                <td>{{ s.total_questions }}</td>
+                <td>{{ s.correct_answers }}</td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress progress-modern flex-grow-1" style="width: 100px;">
+                      <div class="progress-bar {% if s.accuracy >= 70 %}bg-success{% elif s.accuracy >= 40 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ s.accuracy }}%"></div>
+                    </div>
+                    <span class="fw-bold">{{ "%.1f"|format(s.accuracy) }}%</span>
+                  </div>
+                </td>
+                <td>
+                  {% if s.accuracy >= 70 %}
+                    <span class="badge badge-strong">Strong</span>
+                  {% elif s.accuracy >= 40 %}
+                    <span class="badge badge-average">Average</span>
+                  {% else %}
+                    <span class="badge badge-weak">Weak</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Topic Breakdown Table -->
+    <div class="card card-modern p-4 mb-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-diagram-3 text-primary me-2"></i>Topic Classification Breakdown (Weakest First)</h5>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Topic</th>
+              <th>Subject</th>
+              <th>Score</th>
+              <th>Accuracy</th>
+              <th>AI Classification</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in topics_summary %}
+              <tr>
+                <td class="fw-semibold">{{ t.topic_name }}</td>
+                <td class="small text-muted">{{ t.subject_name }}</td>
+                <td>{{ t.correct_answers }} / {{ t.total_questions }}</td>
+                <td><strong>{{ "%.1f"|format(t.accuracy) }}%</strong></td>
+                <td>
+                  {% if t.classification == 'STRONG' %}
+                    <span class="badge badge-strong">STRONG (&gt;70%)</span>
+                  {% elif t.classification == 'AVERAGE' %}
+                    <span class="badge badge-average">AVERAGE (40-70%)</span>
+                  {% else %}
+                    <span class="badge badge-weak">WEAK (&lt;40%)</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{{ url_for('recommendations_view') }}#topic_{{ t.topic_id }}" class="btn btn-sm btn-outline-primary">
+                    View Plan
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
